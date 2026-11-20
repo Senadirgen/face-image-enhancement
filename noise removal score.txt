@@ -1,0 +1,5 @@
+=== TÜM GÖRSELLER İÇİN ORTALAMA SONUÇLAR ===
+Gaussian     -> Ortalama PSNR: 32.65 dB | Ortalama SSIM: 0.7264
+Bilateral    -> Ortalama PSNR: 33.83 dB | Ortalama SSIM: 0.7819
+NL_Means     -> Ortalama PSNR: 26.91 dB | Ortalama SSIM: 0.4965
+Median_SP    -> Ortalama PSNR: 42.54 dB | Ortalama SSIM: 0.9908
