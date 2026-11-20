@@ -1,11 +1,6 @@
-
 import cv2
 import os
 import numpy as np
-
-# ==========================================
-# 1. PROJECT PATHS
-# ==========================================
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -16,10 +11,6 @@ model_path = os.path.join(BASE_DIR, "models", "lbfmodel.yaml")
 OUTPUT_SIZE = (256, 256)
 
 IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".png", ".bmp", ".pgm")
-
-# ==========================================
-# 2. CHECK FILES
-# ==========================================
 
 if not os.path.isdir(dataset_path):
     raise FileNotFoundError(
@@ -33,10 +24,6 @@ if not os.path.isfile(model_path):
 
 os.makedirs(output_path, exist_ok=True)
 
-# ==========================================
-# 3. LOAD FACE DETECTOR
-# ==========================================
-
 cascade_path = (
     cv2.data.haarcascades +
     "haarcascade_frontalface_default.xml"
@@ -47,10 +34,6 @@ face_detector = cv2.CascadeClassifier(cascade_path)
 if face_detector.empty():
     raise RuntimeError("Haar Cascade could not be loaded!")
 
-# ==========================================
-# 4. LOAD LANDMARK MODEL
-# ==========================================
-
 if not hasattr(cv2, "face"):
     raise RuntimeError(
         "Install opencv-contrib-python!"
@@ -59,9 +42,6 @@ if not hasattr(cv2, "face"):
 facemark = cv2.face.createFacemarkLBF()
 facemark.loadModel(model_path)
 
-# ==========================================
-# 5. FACE ALIGNMENT FUNCTION
-# ==========================================
 
 def align_face(image):
 
@@ -72,10 +52,8 @@ def align_face(image):
 
     height, width = gray.shape
 
-    # Improve contrast for face detection
     equalized = cv2.equalizeHist(gray)
 
-    # Detect faces
     faces = face_detector.detectMultiScale(
         equalized,
         scaleFactor=1.1,
@@ -86,7 +64,6 @@ def align_face(image):
     if len(faces) == 0:
         return None
 
-    # Select largest face
     x, y, w, h = max(
         faces,
         key=lambda face: face[2] * face[3]
@@ -97,7 +74,6 @@ def align_face(image):
         dtype=np.int32
     )
 
-    # Detect 68 facial landmarks
     try:
         success, landmarks = facemark.fit(
             gray,
@@ -109,17 +85,14 @@ def align_face(image):
     if not success or len(landmarks) == 0:
         return None
 
-    # Convert landmark data
     points = np.asarray(landmarks[0]).reshape(-1, 2)
 
     if points.shape != (68, 2):
         return None
 
-    # Check landmark coordinates
     if not np.all(np.isfinite(points)):
         return None
 
-    # Calculate eye centers
     left_eye = np.mean(points[36:42], axis=0)
     right_eye = np.mean(points[42:48], axis=0)
 
@@ -129,7 +102,6 @@ def align_face(image):
     if not np.all(np.isfinite(right_eye)):
         return None
 
-    # Calculate eye angle
     delta_y = right_eye[1] - left_eye[1]
     delta_x = right_eye[0] - left_eye[0]
 
@@ -143,13 +115,11 @@ def align_face(image):
     if not np.isfinite(angle):
         return None
 
-    # Calculate eye center
     eye_center = (
         float((left_eye[0] + right_eye[0]) / 2),
         float((left_eye[1] + right_eye[1]) / 2)
     )
 
-    # Rotate image
     rotation_matrix = cv2.getRotationMatrix2D(
         eye_center,
         angle,
@@ -164,7 +134,6 @@ def align_face(image):
         borderMode=cv2.BORDER_REFLECT_101
     )
 
-    # Transform face center
     face_center = np.array([
         x + w / 2,
         y + h / 2,
@@ -173,11 +142,9 @@ def align_face(image):
 
     rotated_center = rotation_matrix @ face_center
 
-    # Calculate crop size
     crop_size = int(max(w, h) * 1.5)
     crop_size = max(crop_size, 40)
 
-    # Add padding
     pad = crop_size
 
     padded = cv2.copyMakeBorder(
@@ -194,7 +161,6 @@ def align_face(image):
         float(rotated_center[1] + pad)
     )
 
-    # Crop face
     cropped = cv2.getRectSubPix(
         padded,
         (crop_size, crop_size),
@@ -204,7 +170,6 @@ def align_face(image):
     if cropped is None or cropped.size == 0:
         return None
 
-    # Resize to standard dimensions
     aligned = cv2.resize(
         cropped,
         OUTPUT_SIZE,
@@ -213,10 +178,6 @@ def align_face(image):
 
     return aligned
 
-
-# ==========================================
-# 6. PROCESS DATASET
-# ==========================================
 
 total_images = 0
 aligned_images = 0
@@ -287,10 +248,6 @@ for person_folder in sorted(os.listdir(dataset_path)):
         f"{image_count} aligned images"
     )
 
-
-# ==========================================
-# 7. FINAL REPORT
-# ==========================================
 
 print("\n================================")
 print("       FACE ALIGNMENT RESULTS")
