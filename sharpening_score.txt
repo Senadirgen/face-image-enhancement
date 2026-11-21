@@ -1,0 +1,5 @@
+=== DETAY KESKİNLEŞTİRME (MODÜL 3) ORTALAMA SKORLARI ===
+
+Denoised (Girdi)       -> Ort. Laplacian Varyansı:   156.58 | Ort. Tenengrad:    3417.09
+Unsharp Masking        -> Ort. Laplacian Varyansı:   642.84 | Ort. Tenengrad:    5158.18
+Laplacian Sharpening   -> Ort. Laplacian Varyansı:   973.87 | Ort. Tenengrad:    8333.26
